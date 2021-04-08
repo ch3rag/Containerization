@@ -38,37 +38,130 @@ Server:
 ...
 ```
 ---
+### ```docker login```
+* Log in to a Docker registry.
+* -p, --password string: Password.
+* -u, --username string: Username.
+```bash
+chirag@ubuntu:~$ docker login
+Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
+Username: your_username
+Password:
+WARNING! Your password will be stored unencrypted in /home/chirag/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+```
+---
+### ```docker logout```
+* Log out from a Docker registry.
+```bash
+chirag@ubuntu:~$ docker logout
+Removing login credentials for https://index.docker.io/v1/
+```
+---
 ## Image Commands
 ---
-### ```docker images```
+### ```docker image ls```
 * List images.
+* Equivalent to ```docker images```.
 * -q, --quiet: Only show image IDs.
 *  -a, --all: Show all images (default hides intermediate images).
 ```bash
-
-chirag@ubuntu:~$ docker images
+chirag@ubuntu:~$ docker image ls
 REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
-alpine       latest    49f356fa4513   6 days ago    5.61MB
-nginx        latest    7ce4f91ef623   7 days ago    133MB
-chirag@ubuntu:~$ docker images -a
-REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
-alpine       latest    49f356fa4513   6 days ago    5.61MB
-nginx        latest    7ce4f91ef623   7 days
-chirag@ubuntu:~$ docker images -aq
-49f356fa4513
-7ce4f91ef623
+ubuntu       latest    26b77e58432b   5 days ago    72.9MB
+alpine       latest    49f356fa4513   7 days ago    5.61MB
+...
 ```
 ---
-### ```docker rmi```
+### ```docker image pull```
+* Pull an image or a repository from a registry.
+* Equivalent to ```docker pull```.
+```bash
+chirag@ubuntu:~$ docker pull hello-world
+Using default tag: latest
+latest: Pulling from library/hello-world
+b8dfde127a29: Pull complete
+Digest: sha256:308866a43596e83578c7dfa15e27a73011bdd402185a84c5cd7f32a88b501a24
+Status: Downloaded newer image for hello-world:latest
+docker.io/library/hello-world:latest
+```
+---
+### ```docker image push```
+* Push an image or a repository to a registry
+* Equivalent to ```docker push```.
+```bash
+chirag@ubuntu:~$ docker push ch3rag/nginx
+Using default tag: latest
+The push refers to repository [docker.io/ch3rag/nginx]
+1914a564711c: Mounted from library/nginx
+db765d5bf9f8: Mounted from library/nginx
+903ae422d007: Mounted from library/nginx
+66f88fdd699b: Mounted from library/nginx
+2ba086d0a00c: Mounted from library/nginx
+346fddbbb0ff: Mounted from library/mysql
+latest: digest: sha256:c137f6c852bfdf74694fe20693bb11e61b51e0b8c50d17dff881f2db05e65de9 size: 1570
+```
+---
+### ```docker image rm```
 * Remove one or more images.
+* Equivalent to ```docker rmi```.
 * -f, --force: Force removal of the image
 ```bash
-chirag@ubuntu:~$ docker rmi alpine:latest
-Untagged: alpine:latest
-Untagged: alpine@sha256:ec14c7992a97fc11425907e908340c6c3d6ff602f5f13d899e6b7027c9b4133a
-Deleted: sha256:49f356fa4513676c5e22e3a8404aad6c7262cc7aaed15341458265320786c58c
-Deleted: sha256:8ea3b23f387bedc5e3cee574742d748941443c328a75f511eb37b0d8b6164130
+chirag@ubuntu:~$ docker image rm hello-world:latest
+Untagged: hello-world:latest
+Untagged: hello-world@sha256:308866a43596e83578c7dfa15e27a73011bdd402185a84c5cd7f32a88b501a24
+Deleted: sha256:d1165f2212346b2bab48cb01c1e39ee8ad1be46b87873d9ca7a4e434980a7726
+Deleted: sha256:f22b99068db93900abe17f7f5e09ec775c2826ecfe9db961fea68293744144bd
 ```
+---
+### ```docker image history```
+* Show the history of an image.
+* Equivalent to ```docker history```.
+```bash
+chirag@ubuntu:~$ docker history ubuntu:latest
+IMAGE          CREATED      CREATED BY                                      SIZE      COMMENT
+26b77e58432b   5 days ago   /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B
+<missing>      5 days ago   /bin/sh -c mkdir -p /run/systemd && echo 'do…   7B
+<missing>      5 days ago   /bin/sh -c [ -z "$(apt-get indextargets)" ]     0B
+<missing>      5 days ago   /bin/sh -c set -xe   && echo '#!/bin/sh' > /…   811B
+<missing>      5 days ago   /bin/sh -c #(nop) ADD file:27277aee655dd263e…   72.9MB
+```
+---
+### ```docker image inspect```
+* Display detailed information on one or more images.
+```bash
+chirag@ubuntu:~$ docker image inspect nginx:latest
+[
+    {
+        "Id": "sha256:7ce4f91ef623b9672ec12302c4a710629cd542617c1ebc616a48d06e2a84656a",
+        "RepoTags": [
+            "nginx:latest"
+        ],
+		...
+		"ContainerConfig": {
+			"Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NGINX_VERSION=1.19.9",
+                "NJS_VERSION=0.5.3",
+                "PKG_RELEASE=1~buster"
+            ],
+			 "Cmd": [
+                "/bin/sh",
+                "-c",
+                "#(nop) ",
+                "CMD [\"nginx\" \"-g\" \"daemon off;\"]"
+            ],
+			...
+```
+---
+### ```docker image tag```
+* Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE.
+* Equivalent to ```docker tag```.
+* 
+
 ---
 ## Container Commands
 ---
@@ -84,6 +177,7 @@ Deleted: sha256:8ea3b23f387bedc5e3cee574742d748941443c328a75f511eb37b0d8b6164130
 * -v, --volume list: Bind mount a volume.
 * -w, --workdir string: Working directory inside the container.
 * --network network: Connect a container to a network.
+* --network-alias list: Add network-scoped alias for the container.
 ```
 chirag@ubuntu:~$ docker run --name webserver --detach --publish 80:80 --network my_app_net nginx
 f77c10bbb11c6fb38e215983e6aa14dd9b8791420ee31ccc7e33aa3b30abe154
