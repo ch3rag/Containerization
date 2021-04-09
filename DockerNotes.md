@@ -140,27 +140,140 @@ chirag@ubuntu:~$ docker image inspect nginx:latest
         "RepoTags": [
             "nginx:latest"
         ],
-		...
-		"ContainerConfig": {
-			"Env": [
+        ...
+        "ContainerConfig": {
+            "Env": [
                 "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
                 "NGINX_VERSION=1.19.9",
                 "NJS_VERSION=0.5.3",
                 "PKG_RELEASE=1~buster"
             ],
-			 "Cmd": [
+            "Cmd": [
                 "/bin/sh",
                 "-c",
                 "#(nop) ",
                 "CMD [\"nginx\" \"-g\" \"daemon off;\"]"
             ],
-			...
+            ...
 ```
 ---
 ### ```docker image tag```
 * Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE.
 * Equivalent to ```docker tag```.
-* 
+```bash
+chirag@ubuntu:~$ docker image ls | grep nginx
+ch3rag/mynginx   latest    7ce4f91ef623   9 days ago     133MB
+nginx            latest    7ce4f91ef623   9 days ago     133MB
+```
+---
+### ```docker image build```
+* Build an image from a Dockerfile.
+* Equivalent to ```docker build```.
+* -t, --tag list: Name and optionally a tag in the 'name:tag' format.
+* -f, --file string: Name of the Dockerfile (Default is 'PATH/Dockerfile').
+```bash
+chirag@ubuntu:~/nodeapp$ ls
+Dockerfile  index.js  package.json
+chirag@ubuntu:~/nodeapp$ nano Dockerfile
+chirag@ubuntu:~/nodeapp$ clear
+chirag@ubuntu:~/nodeapp$ cat index.js
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => res.send('Hello, World!'));
+
+app.listen(3000, () => {
+        console.log('App listening on port 3000');
+});
+chirag@ubuntu:~/nodeapp$ cat package.json
+{
+        "name": "hello-world",
+        "version": "1.0.0",
+        "main": "index.js",
+        "dependencies": {
+                "express": "^4.16.2"
+        },
+        "scripts": {
+                "start": "node index.js"
+        }
+}
+chirag@ubuntu:~/nodeapp$ cat Dockerfile
+FROM node
+
+EXPOSE 3000
+
+WORKDIR /app
+
+COPY package.json index.js ./
+
+RUN npm install
+
+CMD ["npm", "start"]
+chirag@ubuntu:~/nodeapp$ docker image build -t hello-nodejs .
+Sending build context to Docker daemon  4.096kB
+Step 1/6 : FROM node
+latest: Pulling from library/node
+00168f89dbe8: Pull complete
+da61ad49fa99: Pull complete
+af62e04c0f85: Pull complete
+aae835e2c68e: Pull complete
+5254dc317968: Pull complete
+b3f76fdfa8e8: Pull complete
+af702d43bbb8: Pull complete
+6046c161e0b2: Pull complete
+314cc5119377: Pull complete
+Digest: sha256:bb63820d474ced424af2b038edd629056cb7b27bffef74566f872c44d588511c
+Status: Downloaded newer image for node:latest
+ ---> 6e72986b1b6e
+Step 2/6 : EXPOSE 3000
+ ---> Running in 645b30700658
+Removing intermediate container 645b30700658
+ ---> 84f2eee8a7c7
+Step 3/6 : WORKDIR /app
+ ---> Running in 9d18ec4dc71c
+Removing intermediate container 9d18ec4dc71c
+ ---> 5772e9091e4d
+Step 4/6 : COPY package.json index.js ./
+ ---> c3995860f6bd
+Step 5/6 : RUN npm install
+ ---> Running in 67d01d9116b7
+
+added 50 packages, and audited 51 packages in 3s
+
+found 0 vulnerabilities
+npm notice
+npm notice New minor version of npm available! 7.7.6 -> 7.9.0
+npm notice Changelog: <https://github.com/npm/cli/releases/tag/v7.9.0>
+npm notice Run `npm install -g npm@7.9.0` to update!
+npm notice
+Removing intermediate container 67d01d9116b7
+ ---> d6f909c5fc64
+Step 6/6 : CMD ["npm", "start"]
+ ---> Running in 5fac04004eef
+Removing intermediate container 5fac04004eef
+ ---> 38019b10e56a
+Successfully built 38019b10e56a
+Successfully tagged hello-nodejs:latest
+chirag@ubuntu:~/nodeapp$ docker container logs nodeapp
+
+> hello-world@1.0.0 start
+> node index.js
+
+App listening on port 3000
+chirag@ubuntu:~/nodeapp$ curl localhost:3000
+Hello, World!
+```
+---
+### ```docker image prune```
+* Remove unused images.
+* -a, --all: Remove all unused images, not just dangling ones.
+* -f, --force: Do not prompt for confirmation.
+```bash
+chirag@ubuntu:~$ docker image prune
+WARNING! This will remove all dangling images.
+Are you sure you want to continue? [y/N] y
+Total reclaimed space: 0B
+```
 
 ---
 ## Container Commands
@@ -262,7 +375,7 @@ chirag@ubuntu:~$ docker inspect webserver
         "State": {
             "Status": "running",
             "Running": true,
-...
+        ...
 		"Networks": {
                 "bridge": {
                     "IPAMConfig": null,
@@ -272,7 +385,7 @@ chirag@ubuntu:~$ docker inspect webserver
                     "EndpointID": "36cafd2810929f21cae2ba384ce3e4452917e396f5b725042f58f03a557066a2",
                     "Gateway": "172.17.0.1",
                     "IPAddress": "172.17.0.2",
-...
+                    ...
 chirag@ubuntu:~$ docker inspect webserver -f "{{.NetworkSettings.IPAddress}}"
 172.17.0.2
 ```
@@ -440,7 +553,7 @@ chirag@ubuntu:~$ docker network inspect my_app_net
                 {
                     "Subnet": "172.21.0.0/16",
                     "Gateway": "172.21.0.1"
-...
+                    ...
 ```
 ---
 ### ```docker network connect```
@@ -462,5 +575,39 @@ map[bridge:0xc000501b00 my_app_net:0xc000501bc0]
 chirag@ubuntu:~$ docker network disconnect my_app_net webserver
 chirag@ubuntu:~$ docker container inspect webserver -f {{.NetworkSettings.Networks}}
 map[bridge:0xc000505b00]
+```
+---
+## System Commands
+---
+### ```docker system prune```
+* Remove unused data.
+* -a, --all: Remove all unused images not just dangling ones.
+* f, --force: Do not prompt for confirmation.
+* --volumes: Prune volumes.
+```bash
+chirag@ubuntu:~$ docker system prune
+WARNING! This will remove:
+  - all stopped containers
+  - all networks not used by at least one container
+  - all dangling images
+  - all dangling build cache
+
+Are you sure you want to continue? [y/N] y
+Deleted Networks:
+search_net
+my_app_net
+
+Total reclaimed space: 0B
+```
+---
+### ```docker system df```
+* Show docker disk usage.
+```bash
+chirag@ubuntu:~$ docker system df
+TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+Images          11        0         2.012GB   2.012GB (100%)
+Containers      0         0         0B        0B
+Local Volumes   6         0         505.6MB   505.6MB (100%)
+Build Cache     0         0         0B        0B
 ```
 ---
