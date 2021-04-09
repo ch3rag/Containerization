@@ -80,7 +80,7 @@ alpine       latest    49f356fa4513   7 days ago    5.61MB
 * Pull an image or a repository from a registry.
 * Equivalent to ```docker pull```.
 ```bash
-chirag@ubuntu:~$ docker pull hello-world
+chirag@ubuntu:~$ docker image pull hello-world
 Using default tag: latest
 latest: Pulling from library/hello-world
 b8dfde127a29: Pull complete
@@ -93,7 +93,7 @@ docker.io/library/hello-world:latest
 * Push an image or a repository to a registry
 * Equivalent to ```docker push```.
 ```bash
-chirag@ubuntu:~$ docker push ch3rag/nginx
+chirag@ubuntu:~$ docker image push ch3rag/nginx
 Using default tag: latest
 The push refers to repository [docker.io/ch3rag/nginx]
 1914a564711c: Mounted from library/nginx
@@ -121,7 +121,7 @@ Deleted: sha256:f22b99068db93900abe17f7f5e09ec775c2826ecfe9db961fea68293744144bd
 * Show the history of an image.
 * Equivalent to ```docker history```.
 ```bash
-chirag@ubuntu:~$ docker history ubuntu:latest
+chirag@ubuntu:~$ docker image history ubuntu:latest
 IMAGE          CREATED      CREATED BY                                      SIZE      COMMENT
 26b77e58432b   5 days ago   /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B
 <missing>      5 days ago   /bin/sh -c mkdir -p /run/systemd && echo 'do…   7B
@@ -292,7 +292,7 @@ Total reclaimed space: 0B
 * --network network: Connect a container to a network.
 * --network-alias list: Add network-scoped alias for the container.
 ```
-chirag@ubuntu:~$ docker run --name webserver --detach --publish 80:80 --network my_app_net nginx
+chirag@ubuntu:~$ docker container run --name webserver --detach --publish 80:80 --network my_app_net nginx
 f77c10bbb11c6fb38e215983e6aa14dd9b8791420ee31ccc7e33aa3b30abe154
 ```
 ---
@@ -317,7 +317,7 @@ f77c10bbb11c
 * Equivalent to ```docker rm```
 * -f, --force: Force the removal of a running container (uses SIGKILL).
 ```bash
-chirag@ubuntu:~$ docker ps
+chirag@ubuntu:~$ docker container ls
 CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS          PORTS                  NAMES
 099400ce91fc   httpd     "httpd-foreground"       17 seconds ago   Up 16 seconds   0.0.0.0:8080->80/tcp   proxy
 15ad330bf182   nginx     "/docker-entrypoint.…"   43 seconds ago   Up 42 seconds   0.0.0.0:80->80/tcp     webserver
@@ -575,6 +575,154 @@ map[bridge:0xc000501b00 my_app_net:0xc000501bc0]
 chirag@ubuntu:~$ docker network disconnect my_app_net webserver
 chirag@ubuntu:~$ docker container inspect webserver -f {{.NetworkSettings.Networks}}
 map[bridge:0xc000505b00]
+```
+---
+## Volume Commands
+---
+### ```docker volume ls```
+```bash
+chirag@ubuntu:~$ docker container run -d -e MYSQL_RANDOM_ROOT_PASSWORD=True --name db mysql
+ceb23b63438555dad42fbe583416015ca163b612e42296aacc5827d5026cd743
+chirag@ubuntu:~$ docker image inspect mysql:latest
+[
+    {
+        ...
+        "Config": {
+            "Volumes": {
+                "/var/lib/mysql": {}
+            },
+            ...
+chirag@ubuntu:~$ docker volume ls
+DRIVER    VOLUME NAME
+local     8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675
+chirag@ubuntu:~$ docker container inspect db
+[
+    {
+        ...
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675",
+                "Source": "/var/lib/docker/volumes/8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675/_data",
+                "Destination": "/var/lib/mysql",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        ....
+chirag@ubuntu:~$ docker volume inspect 8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675
+[
+    {
+        "CreatedAt": "2021-04-09T13:37:26+05:30",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675/_data",
+        "Name": "8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+chirag@ubuntu:~$ sudo ls /var/lib/docker/volumes/8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675/_data
+ auto.cnf        ca.pem               ib_buffer_pool  '#innodb_temp'        public_key.pem    undo_002
+ binlog.000001   client-cert.pem      ibdata1          mysql                server-cert.pem
+ binlog.000002   client-key.pem       ib_logfile0      mysql.ibd            server-key.pem
+ binlog.index   '#ib_16384_0.dblwr'   ib_logfile1      performance_schema   sys
+ ca-key.pem     '#ib_16384_1.dblwr'   ibtmp1           private_key.pem      undo_001
+chirag@ubuntu:~$ # Clean Up
+chirag@ubuntu:~$ docker container rm -f $(docker container ls -aq)
+d626c1a822a1
+chirag@ubuntu:~$ docker system prune -f --volumes
+Deleted Volumes:
+8bc64e487780ba69676929e005f261fe1809c56ec2c80724f74ef51a1b2e1675
+
+Total reclaimed space: 204.1MB
+chirag@ubuntu:~$ docker volume ls
+DRIVER    VOLUME NAME
+chirag@ubuntu:~$ # Named Volumes
+chirag@ubuntu:~$ docker container  run -d --name db -v mysql-db:/var/lib/mysql mysql
+b09a6805a82fdc342abe510b4a7b79122d95086194a009969b072ea3423ee35c
+chirag@ubuntu:~$ docker volume ls
+DRIVER    VOLUME NAME
+local     mysql-db
+```
+---
+### ```docker volume create```
+* Create a volume.
+-d, --driver string: Specify volume driver name (default "local")
+```bash
+chirag@ubuntu:~$ docker volume create myappdb
+myappdb
+chirag@ubuntu:~$ docker volume ls
+DRIVER    VOLUME NAME
+local     myappdb
+local     mysql-db
+chirag@ubuntu:~$ docker container run -d -v myappdb:/var/lib/mysql -e MYSQL_RANDOM_ROOT_PASSWORD=True --name db2  mysql
+chirag@ubuntu:~$ docker container inspect db2
+[
+    {
+        ...
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "myappdb",
+                "Source": "/var/lib/docker/volumes/myappdb/_data",
+                "Destination": "/var/lib/mysql",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+        ...
+```
+---
+### ```docker volume inspect```
+* Display detailed information on one or more volumes.
+```bash
+chirag@ubuntu:~$ docker volume inspect myappdb
+[
+    {
+        "CreatedAt": "2021-04-09T13:51:22+05:30",
+        "Driver": "local",
+        "Labels": {},
+        "Mountpoint": "/var/lib/docker/volumes/myappdb/_data",
+        "Name": "myappdb",
+        "Options": {},
+        "Scope": "local"
+    }
+]
+```
+---
+### ```docker volume rm```
+* Remove one or more volumes.
+* -f, --force: Force the removal of one or more volumes.
+```bash
+chirag@ubuntu:~$ docker container ls -a
+CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
+chirag@ubuntu:~$ docker volume ls
+DRIVER    VOLUME NAME
+local     myappdb
+local     mysql-db
+chirag@ubuntu:~$ docker volume rm myappdb mysql-db
+myappdb
+mysql-db
+```
+---
+### ```docker volume prune```
+* Remove all unused local volumes.
+* -f, --force: Do not prompt for confirmation.
+```bash
+chirag@ubuntu:~$ docker volume create test-vol
+test-vol
+chirag@ubuntu:~$ docker volume prune
+WARNING! This will remove all local volumes not used by at least one container.
+Are you sure you want to continue? [y/N] y
+Deleted Volumes:
+test-vol
+
+Total reclaimed space: 0B
 ```
 ---
 ## System Commands
