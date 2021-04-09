@@ -18,9 +18,19 @@ ENV NGINX_VERSION 1.11.10-1-jessie
 ENV HTTP_PORT="9000"
 ```
 ### ```WORKDIR```
-
+The WORKDIR command is used to define the working directory of a Docker.
+```Dockerfile
+WORKDIR /path/to/workdir
+```
+---
 ### ```ENTRYPOINT```
-
+* ENTRYPOINT sets the command and parameters that will be executed first when a container is run. 
+* Any command-line arguments passed to ```docker run <image>``` will be appended to the ENTRYPOINT command, and will override all elements specified using CMD
+* For example, ```docker run <image> bash``` will add the command argument bash to the end of the ENTRYPOINT command.
+```Dockerfile
+ENTRYPOINT [ "sh", "-c", "echo $HOME" ]
+```
+---
 ### ```CMD```
 * Both CMD and ENTRYPOINT instructions define what command gets executed when running a container.
 
@@ -34,9 +44,30 @@ CMD ["bin/ping", "localhost"]
 ```Dockerfile
 CMD ["nginx", "-g", "daemon off;"]
 ```
+---
 ### ```COPY```
+* The COPY command is used to copy one or many local files or folders from source and adds them to the filesystem of the containers at the destination path.
 
+* COPY has two forms:
+  * ```COPY <src>,... <dest>```
+  * ```COPY ["<src>",... "<dest>"]```
+
+```Dockerfile
+COPY test relativeDir/   # adds "test" to `WORKDIR`/relativeDir/
+COPY test /absoluteDir/  # adds "test" to /absoluteDir/
+```
+---
 ### ```ADD```
+* The ADD command is used to add one or many local files or folders from the source and adds them to the filesystem of the containers at the destination path.
+
+* It is Similar to COPY command but it has some additional features:
+
+* If the source is a local tar archive in a recognized compression format, then it is automatically unpacked as a directory into the Docker image.
+* If the source is a URL, then it will download and copy the file into the destination within the Docker image. However, Docker discourages using ADD for this purpose.
+* ADD has two forms:
+	* ```ADD <src>... <dest>```
+	* ```ADD ["<src>",... "<dest>"]```
+
 ---
 ### ```EXPOSE```
 * The EXPOSE command informs the Docker that the container listens on the specified network ports at runtime. You can specify whether the port listens on TCP or UDP, and the default is TCP if the protocol is not specified.
@@ -69,3 +100,4 @@ RUN /bin/bash -c 'source $HOME/.bashrc; echo $HOME'
 RUN ln -sf /dev/stdout /var/log/nginx/assess.log \
 	&& ln -sf /dev/stderr /var/log/nginx/error.log
 ```
+---
