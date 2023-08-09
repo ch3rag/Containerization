@@ -61,6 +61,15 @@ chirag@ubuntu:~$ docker logout
 Removing login credentials for https://index.docker.io/v1/
 ```
 ---
+### ```docker search```
+* Search the Docker Hub for images.
+```bash
+chirag@ubuntu:~$ docker search jekyll-serve
+NAME                                    DESCRIPTION                                     STARS     OFFICIAL   AUTOMATED
+bretfisher/jekyll-serve                 The Latest Jekyll in a Docker Container For …   88     
+...
+````
+---
 ## Image Commands
 ---
 ### ```docker image ls```
@@ -392,7 +401,7 @@ chirag@ubuntu:~$ docker inspect webserver -f "{{.NetworkSettings.IPAddress}}"
 ---
 ### ```docker container exec```
 * Run a command in a running container.
-* Equvalent to ```docker exec```.
+* Equivalent to ```docker exec```.
 * -d, --detach: Detached mode: run command in the background.
 * -i, --interactive: Keep STDIN open even if not attached.
 * -t, --tty: Allocate a pseudo-TTY.
